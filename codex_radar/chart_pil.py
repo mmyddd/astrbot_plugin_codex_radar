@@ -181,8 +181,8 @@ def efficiency_scatter_png(
         color = model_color(model, seen_models)
         label = short_model(model)
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 18, legend_y - 10), label, font=_font(12), fill="#374151")
-        legend_x += 30 + len(label) * 14 + 16
+        draw.text((legend_x + 15, legend_y - 10), label, font=_font(11), fill="#374151")
+        legend_x += 24 + len(label) * 12 + 10
 
     footer = f"更新：{_fmt_time(updated_at)}"
     if source_url:

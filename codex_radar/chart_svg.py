@@ -332,10 +332,10 @@ def efficiency_scatter_svg(
             f'<title>{_esc(model)}</title></rect>'
         )
         parts.append(
-            f'<text x="{legend_x + 18}" y="{legend_y}" font-size="12" fill="#374151">'
+            f'<text x="{legend_x + 15}" y="{legend_y}" font-size="11" fill="#374151">'
             f'{_esc(label)}</text>'
         )
-        legend_x += 30 + len(label) * 13 + 16
+        legend_x += 24 + len(label) * 11 + 10
 
     # 页脚
     footer = f"更新：{_fmt_time(updated_at)}"
