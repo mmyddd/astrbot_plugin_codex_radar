@@ -143,7 +143,7 @@ def efficiency_scatter_png(
         draw.line([(x, y + 4), (x + 5, y - 4)], fill="#9ca3af", width=2)
 
     draw.text((width / 2 - 170, height - margin["bottom"] + 48), "相对综合成本指数（对数刻度，最高归一为 100）", font=_font(14), fill="#374151")
-    draw.text((8, height / 2 - 60), "IQ 分数（0-150）", font=_font(14), fill="#374151")
+    draw.text((20, 24), "IQ 分数（0-150）", font=_font(14), fill="#374151")
 
     seen_models: dict[str, int] = {}
     models_in_order: list[str] = []
@@ -181,8 +181,8 @@ def efficiency_scatter_png(
         color = model_color(model, seen_models)
         label = short_model(model)
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 15, legend_y - 10), label, font=_font(11), fill="#374151")
-        legend_x += 24 + len(label) * 12 + 10
+        draw.text((legend_x + 13, legend_y - 10), label, font=_font(11), fill="#374151")
+        legend_x += 20 + len(label) * 11 + 6
 
     footer = f"更新：{_fmt_time(updated_at)}"
     if source_url:
@@ -234,13 +234,13 @@ def iq_history_png(
     window_start: Optional[str] = None,
     window_end: Optional[str] = None,
     updated_at: Optional[str] = None,
-    width: int = 1240,
-    height: int = 460,
+    width: int = 960,
+    height: int = 520,
     effort_colors: bool = False,
 ) -> str:
     """72 小时 IQ 历史曲线（PNG）。返回 out_path。"""
     image, draw = _prepare_image(width, height)
-    margin = {"left": 62, "right": 300, "top": 56, "bottom": 78}
+    margin = {"left": 62, "right": 26, "top": 56, "bottom": 86}
     plot_w = width - margin["left"] - margin["right"]
     plot_h = height - margin["top"] - margin["bottom"]
 
@@ -297,7 +297,7 @@ def iq_history_png(
         draw.line([(x, margin["top"]), (x, height - margin["bottom"])], fill="#e5e7eb", width=1)
         draw.text((x - 34, height - margin["bottom"] + 8), t.strftime("%m-%d %H:%M"), font=_font(12), fill="#6b7280")
 
-    draw.text((width / 2 - 150, height - 44), "IQ 分数（动态区间，波动放大显示）", font=_font(14), fill="#374151")
+    draw.text((width / 2 - 150, height - margin["bottom"] + 48), "IQ 分数（动态区间，波动放大显示）", font=_font(14), fill="#374151")
 
     seen_models: dict[str, int] = {}
     for s in series:
@@ -329,9 +329,9 @@ def iq_history_png(
             x, y = segments[-1][-1]
             draw.ellipse([x - 4, y - 4, x + 4, y + 4], fill=color)
 
-    legend_x = width - margin["right"] + 22
-    legend_y = margin["top"] + 6
-    legend_max_x = width - 8
+    legend_x = margin["left"] + 8
+    legend_y = height - margin["bottom"] + 34
+    legend_max_x = width - margin["right"] - 10
     for s in series:
         color = (
             effort_color(s.effort)
@@ -339,20 +339,20 @@ def iq_history_png(
             else model_color(s.model, seen_models)
         )
         if s.effort is None:
-            label = s.model
+            label = short_model(s.model)
         elif effort_colors:
             label = s.effort  # 单模型视图：图例直接标思考强度
         else:
-            label = f"{s.model}@{s.effort}"
+            label = f"{short_model(s.model)}@{s.effort}"
         latest = s.latest()
         if latest is not None and latest.score is not None:
             label += f"  {latest.score:.1f}"
-        item_w = 18 + len(label) * 11 + 8
+        item_w = 20 + len(label) * 11 + 6
         if legend_x + item_w > legend_max_x:
-            legend_x = width - margin["right"] + 22
-            legend_y += 17
+            legend_x = margin["left"] + 8
+            legend_y += 18
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 18, legend_y - 10), label, font=_font(11), fill="#374151")
+        draw.text((legend_x + 13, legend_y - 10), label, font=_font(11), fill="#374151")
         legend_x += item_w
 
     footer = f"时间范围：{_fmt_time(window_start)} ~ {_fmt_time(window_end)}"

@@ -172,11 +172,12 @@ def test_history_svg_effort_colors_per_level(history_payload):
     # @max 用 max 的 effort 色；模型色不应出现在曲线上
     assert f'stroke="{EFFORT_COLORS["max"]}"' in svg
     assert f'stroke="{MODEL_COLORS["gpt-5.6-sol"]}"' not in svg
-    # 图例直接标思考强度名
+    # 图例直接标思考强度名（完整名在 <title> 悬浮提示中）
     root = ET.fromstring(svg)
     text = ET.tostring(root, encoding="unicode")
     assert ">max " in text  # 图例条目以思考强度名开头
-    assert "gpt-5.6-sol@max" not in text
+    assert ">gpt-5.6-sol@max</ns0:text>" not in text  # 可见文本不含完整名
+    assert "gpt-5.6-sol@max" in text  # title 悬浮提示保留完整名
 
 
 def test_history_png_effort_colors(history_payload, tmp_path):
