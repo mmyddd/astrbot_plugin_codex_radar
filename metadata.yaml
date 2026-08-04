@@ -1,7 +1,7 @@
 name: astrbot_plugin_codex_radar # 插件唯一识别名
 display_name: Codex 智力效率雷达
 desc: 查询 Codex 雷达（codexradar.com / deng.codexradar.com）的模型智力效率数据与 72h IQ 历史曲线。支持指令：降智雷达、雷达历史。
-version: v1.0.2
+version: v1.0.3
 author: mmyddd
 repo: https://github.com/mmyddd/astrbot_plugin_codex_radar
 astrbot_version: ">=4.16"
