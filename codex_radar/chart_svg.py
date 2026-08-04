@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import html
 from datetime import datetime
+from urllib.parse import urlsplit
 from typing import Optional, Sequence
 
 from .history_parser import HistorySeries
@@ -222,6 +223,11 @@ def efficiency_scatter_svg(
         f'<text x="{width / 2}" y="34" text-anchor="middle" font-size="24" font-weight="700" '
         'fill="#111827">综合成本 × IQ（智力效率）</text>'
     )
+    # 站点同款提示：越靠左上越高效
+    parts.append(
+        f'<text x="{width - margin["right"] - 10}" y="34" text-anchor="end" font-size="14" '
+        'fill="#6b7280">↖ 越靠左上越高效</text>'
+    )
 
     # y 轴网格与刻度（站点：6 步，取整）
     for i in range(y_ticks + 1):
@@ -269,7 +275,7 @@ def efficiency_scatter_svg(
 
     # 坐标轴标签
     parts.append(
-        f'<text x="{width / 2}" y="{height - 46}" text-anchor="middle" font-size="14" '
+        f'<text x="{width / 2}" y="{height - margin["bottom"] + 58}" text-anchor="middle" font-size="14" '
         'fill="#374151">相对综合成本指数（对数刻度，最高归一为 100）</text>'
     )
     parts.append(
@@ -315,25 +321,27 @@ def efficiency_scatter_svg(
                 f'fill="#374151">{_esc(point.effort)}</text>'
             )
 
-    # 图例（模型颜色 + 短名）
+    # 图例（模型颜色 + 站点风格短名，单行横排，位置保持原布局；完整名放入 <title> 悬浮提示）
     legend_y = height - margin["bottom"] + 34
     legend_x = margin["left"] + 8
     for model in models_in_order:
         color = model_color(model, seen_models)
         label = short_model(model)
         parts.append(
-            f'<rect x="{legend_x}" y="{legend_y - 10}" width="12" height="12" rx="2" fill="{color}"/>'
+            f'<rect x="{legend_x}" y="{legend_y - 10}" width="12" height="12" rx="2" fill="{color}">'
+            f'<title>{_esc(model)}</title></rect>'
         )
         parts.append(
             f'<text x="{legend_x + 18}" y="{legend_y}" font-size="12" fill="#374151">'
-            f'{_esc(model)}</text>'
+            f'{_esc(label)}</text>'
         )
         legend_x += 30 + len(label) * 13 + 16
 
     # 页脚
     footer = f"更新：{_fmt_time(updated_at)}"
     if source_url:
-        footer += f"　来源：{source_url}"
+        host = urlsplit(source_url).netloc or source_url
+        footer += f"　来源：{host}"
     footer += "　公式：按 2.5×价格≈1.35×速度 折算，最高综合成本归一为 100"
     parts.append(
         f'<text x="{width / 2}" y="{height - 12}" text-anchor="middle" font-size="12" '
@@ -351,12 +359,12 @@ def iq_history_svg(
     window_start: Optional[str] = None,
     window_end: Optional[str] = None,
     updated_at: Optional[str] = None,
-    width: int = WIDTH,
+    width: int = 1240,
     height: int = 460,
     effort_colors: bool = False,
 ) -> str:
     """72 小时 IQ 历史曲线（每模型一条线）。"""
-    margin = {"left": 62, "right": 26, "top": 56, "bottom": 78}
+    margin = {"left": 62, "right": 300, "top": 56, "bottom": 78}
     plot_w = width - margin["left"] - margin["right"]
     plot_h = height - margin["top"] - margin["bottom"]
 
@@ -482,9 +490,10 @@ def iq_history_svg(
             x, y = segments[-1][-1]
             parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{color}"/>')
 
-    # 图例（右上角）
-    legend_x = width - margin["right"] - 240
+    # 图例（右侧独立栏，位于绘图区之外，不与曲线重叠）
+    legend_x = width - margin["right"] + 22
     legend_y = margin["top"] + 6
+    legend_max_x = width - 8
     for s in series:
         color = (
             effort_color(s.effort)
@@ -499,14 +508,18 @@ def iq_history_svg(
             label = f"{s.model}@{s.effort}"
         latest = s.latest()
         latest_txt = "" if latest is None or latest.score is None else f"  {latest.score:.1f}"
+        item_w = 18 + (len(label) + len(latest_txt)) * 11 + 8
+        if legend_x + item_w > legend_max_x:
+            legend_x = width - margin["right"] + 22
+            legend_y += 17
         parts.append(
             f'<rect x="{legend_x}" y="{legend_y - 10}" width="12" height="12" rx="2" fill="{color}"/>'
         )
         parts.append(
-            f'<text x="{legend_x + 18}" y="{legend_y}" font-size="12" fill="#374151">'
+            f'<text x="{legend_x + 18}" y="{legend_y}" font-size="11" fill="#374151">'
             f'{_esc(label + latest_txt)}</text>'
         )
-        legend_y += 18
+        legend_x += item_w
 
     # 页脚
     footer = f"时间范围：{_fmt_time(window_start)} ~ {_fmt_time(window_end)}"

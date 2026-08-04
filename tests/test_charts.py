@@ -28,6 +28,7 @@ def test_scatter_svg_well_formed(efficiency_payload):
     assert "综合成本 × IQ" in text
     assert "gpt-5.6-sol" in text
     assert "更新时间" in text or "更新" in text
+    assert "越靠左上越高效" in text  # 站点同款效率提示
 
 
 def test_scatter_uses_log_scale_and_broken_axis(efficiency_payload):

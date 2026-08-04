@@ -10,6 +10,8 @@ import os
 from datetime import datetime
 from typing import Optional, Sequence
 
+from urllib.parse import urlsplit
+
 from PIL import Image, ImageDraw, ImageFont
 
 from .chart_svg import MODEL_COLORS, model_color, short_model
@@ -105,6 +107,13 @@ def efficiency_scatter_png(
         return margin["top"] + (1 - iq / y_max) * plot_h
 
     draw.text((width / 2 - 150, 14), "综合成本 × IQ（智力效率）", font=_font(24, bold=True), fill="#111827")
+    draw.text(
+        (width - margin["right"] - 10, 34),
+        "↖ 越靠左上越高效",
+        font=_font(14),
+        fill="#6b7280",
+        anchor="ra",
+    )
 
     for i in range(y_ticks + 1):
         iq = y_max * i / y_ticks
@@ -133,7 +142,7 @@ def efficiency_scatter_png(
         draw.line([(x - 6, y + 4), (x - 1, y - 4)], fill="#9ca3af", width=2)
         draw.line([(x, y + 4), (x + 5, y - 4)], fill="#9ca3af", width=2)
 
-    draw.text((width / 2 - 170, height - 46), "相对综合成本指数（对数刻度，最高归一为 100）", font=_font(14), fill="#374151")
+    draw.text((width / 2 - 170, height - margin["bottom"] + 48), "相对综合成本指数（对数刻度，最高归一为 100）", font=_font(14), fill="#374151")
     draw.text((8, height / 2 - 60), "IQ 分数（0-150）", font=_font(14), fill="#374151")
 
     seen_models: dict[str, int] = {}
@@ -166,19 +175,20 @@ def efficiency_scatter_png(
             dy = 17 if (order + index) % 2 else -9
             draw.text((x - 12, y + dy - 7), point.effort, font=_font(11), fill="#374151")
 
-    legend_y = height - margin["bottom"] + 40
+    legend_y = height - margin["bottom"] + 34
     legend_x = margin["left"] + 8
     for model in models_in_order:
         color = model_color(model, seen_models)
         label = short_model(model)
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 18, legend_y - 10), model, font=_font(12), fill="#374151")
-        legend_x += 30 + len(label) * 14
+        draw.text((legend_x + 18, legend_y - 10), label, font=_font(12), fill="#374151")
+        legend_x += 30 + len(label) * 14 + 16
 
     footer = f"更新：{_fmt_time(updated_at)}"
     if source_url:
-        footer += f"  来源：{source_url}"
-    draw.text((width / 2 - 330, height - 22), footer[:70], font=_font(12), fill="#9ca3af")
+        host = urlsplit(source_url).netloc or source_url
+        footer += f"  来源：{host}"
+    draw.text((width / 2, height - 12), footer, font=_font(12), fill="#9ca3af", anchor="mm")
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     image.save(out_path, "PNG")
@@ -224,13 +234,13 @@ def iq_history_png(
     window_start: Optional[str] = None,
     window_end: Optional[str] = None,
     updated_at: Optional[str] = None,
-    width: int = 960,
+    width: int = 1240,
     height: int = 460,
     effort_colors: bool = False,
 ) -> str:
     """72 小时 IQ 历史曲线（PNG）。返回 out_path。"""
     image, draw = _prepare_image(width, height)
-    margin = {"left": 62, "right": 26, "top": 56, "bottom": 78}
+    margin = {"left": 62, "right": 300, "top": 56, "bottom": 78}
     plot_w = width - margin["left"] - margin["right"]
     plot_h = height - margin["top"] - margin["bottom"]
 
@@ -319,8 +329,9 @@ def iq_history_png(
             x, y = segments[-1][-1]
             draw.ellipse([x - 4, y - 4, x + 4, y + 4], fill=color)
 
-    legend_x = width - margin["right"] - 250
+    legend_x = width - margin["right"] + 22
     legend_y = margin["top"] + 6
+    legend_max_x = width - 8
     for s in series:
         color = (
             effort_color(s.effort)
@@ -336,9 +347,13 @@ def iq_history_png(
         latest = s.latest()
         if latest is not None and latest.score is not None:
             label += f"  {latest.score:.1f}"
+        item_w = 18 + len(label) * 11 + 8
+        if legend_x + item_w > legend_max_x:
+            legend_x = width - margin["right"] + 22
+            legend_y += 17
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 18, legend_y - 10), label[:26], font=_font(12), fill="#374151")
-        legend_y += 18
+        draw.text((legend_x + 18, legend_y - 10), label, font=_font(11), fill="#374151")
+        legend_x += item_w
 
     footer = f"时间范围：{_fmt_time(window_start)} ~ {_fmt_time(window_end)}"
     if updated_at:
