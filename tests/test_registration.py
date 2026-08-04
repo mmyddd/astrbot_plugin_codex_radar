@@ -164,7 +164,8 @@ async def test_history_command_returns_chart_and_text(plugin, history_payload, t
     kind, chain = results[0]
     assert kind == "chain"
     kinds = [type(c).__name__ for c in chain]
-    assert "Plain" in kinds and "Image" in kinds
+    # 消息顺序：先图片后文字
+    assert kinds == ["Image", "Plain"]
     text = next(c for c in chain if type(c).__name__ == "Plain").text
     assert "72" in text
     assert "gpt-5.6-sol" in text
@@ -202,3 +203,10 @@ def test_text_formatting_smoke(efficiency_payload, history_payload):
     history = parse_iq_history(history_payload, hours=72)
     htext = format_history_text(history)
     assert "IQ 历史" in htext
+
+
+def test_html_shell_fills_viewport_width():
+    """回归：SVG 必须撑满渲染视口宽度，避免右侧大片空白。"""
+    shell = main._HTML_SHELL
+    assert "width: 100vw" in shell
+    assert "height: auto" in shell

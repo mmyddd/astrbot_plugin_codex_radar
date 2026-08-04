@@ -40,8 +40,12 @@ from codex_radar.radar_parser import RadarSnapshot
 from codex_radar.service import RadarConfig, RadarService
 
 _HTML_SHELL = """<!doctype html>
-<html><head><meta charset="utf-8"></head>
-<body style="margin:0;background:#ffffff">{{ svg | safe }}</body></html>"""
+<html><head><meta charset="utf-8"><style>
+ html, body { margin: 0; padding: 0; background: #ffffff; }
+ /* 渲染服务使用固定 viewport 宽度：让 SVG 撑满视口，避免右侧大片空白 */
+ svg { display: block; width: 100vw !important; height: auto !important; }
+</style></head>
+<body>{{ svg | safe }}</body></html>"""
 
 
 def _out_dir() -> str:
@@ -79,7 +83,7 @@ class CodexRadarPlugin(Star):
         if self._config.send_chart_image:
             image_path = await self._render_scatter(snapshot)
             if image_path:
-                yield event.chain_result([Plain(text), Image.fromFileSystem(image_path)])
+                yield event.chain_result([Image.fromFileSystem(image_path), Plain(text)])
                 return
         yield event.plain_result(text)
 
@@ -106,7 +110,7 @@ class CodexRadarPlugin(Star):
         if self._config.send_chart_image:
             image_path = await self._render_history(snapshot, model=selected)
             if image_path:
-                yield event.chain_result([Plain(text), Image.fromFileSystem(image_path)])
+                yield event.chain_result([Image.fromFileSystem(image_path), Plain(text)])
                 return
         yield event.plain_result(text)
 
