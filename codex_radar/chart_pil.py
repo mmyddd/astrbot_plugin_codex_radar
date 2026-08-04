@@ -143,7 +143,7 @@ def efficiency_scatter_png(
         draw.line([(x, y + 4), (x + 5, y - 4)], fill="#9ca3af", width=2)
 
     draw.text((width / 2 - 170, height - margin["bottom"] + 48), "相对综合成本指数（对数刻度，最高归一为 100）", font=_font(14), fill="#374151")
-    draw.text((20, 24), "IQ 分数（0-150）", font=_font(14), fill="#374151")
+    draw.text((20, 24), "IQ 分数", font=_font(14), fill="#374151")
 
     seen_models: dict[str, int] = {}
     models_in_order: list[str] = []
@@ -347,12 +347,13 @@ def iq_history_png(
         latest = s.latest()
         if latest is not None and latest.score is not None:
             label += f"  {latest.score:.1f}"
-        item_w = 20 + len(label) * 11 + 6
+        text_w = draw.textlength(label, font=_font(11))
+        item_w = 15 + text_w + 4
         if legend_x + item_w > legend_max_x:
             legend_x = margin["left"] + 8
             legend_y += 18
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 13, legend_y - 10), label, font=_font(11), fill="#374151")
+        draw.text((legend_x + 15, legend_y - 10), label, font=_font(11), fill="#374151")
         legend_x += item_w
 
     footer = f"时间范围：{_fmt_time(window_start)} ~ {_fmt_time(window_end)}"

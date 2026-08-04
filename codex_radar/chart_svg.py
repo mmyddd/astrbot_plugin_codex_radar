@@ -1,7 +1,7 @@
 """SVG 图表生成（纯函数，无第三方依赖）。
 
 生成两类图：
-1. 智力效率散点图：综合成本指数（x） × IQ 分数（y），对应站点「综合成本 × IQ」图
+1. 智力效率散点图：综合成本指数 × IQ 分数，对应站点「综合成本 × IQ」图
 2. IQ 历史曲线图：72 小时 IQ 曲线（每模型一条线）
 
 SVG 由 AstrBot 的 html_render（Playwright）渲染为 PNG；测试中可直接校验 XML。
@@ -280,7 +280,7 @@ def efficiency_scatter_svg(
     )
     # y 轴标签：移到左上角（水平文字）
     parts.append(
-        f'<text x="20" y="34" font-size="14" fill="#374151">IQ 分数（0-150）</text>'
+        f'<text x="20" y="34" font-size="14" fill="#374151">IQ 分数</text>'
     )
 
     # 系列：每模型折线（effort 按 effortOrder 排序）+ 强度形状点 + 标签
@@ -332,10 +332,10 @@ def efficiency_scatter_svg(
             f'<title>{_esc(model)}</title></rect>'
         )
         parts.append(
-            f'<text x="{legend_x + 13}" y="{legend_y}" font-size="11" fill="#374151">'
+            f'<text x="{legend_x + 15}" y="{legend_y}" font-size="11" fill="#374151">'
             f'{_esc(label)}</text>'
         )
-        legend_x += 20 + len(label) * 10 + 6
+        legend_x += 19 + len(label) * 8
 
     # 页脚
     footer = f"更新：{_fmt_time(updated_at)}"
@@ -511,7 +511,7 @@ def iq_history_svg(
             full_label = f"{s.model}@{s.effort}"
         latest = s.latest()
         latest_txt = "" if latest is None or latest.score is None else f"  {latest.score:.1f}"
-        item_w = 20 + (len(label) + len(latest_txt)) * 10 + 6
+        item_w = 19 + (len(label) + len(latest_txt)) * 8
         if legend_x + item_w > legend_max_x:
             legend_x = margin["left"] + 8
             legend_y += 18
@@ -520,7 +520,7 @@ def iq_history_svg(
             f'<title>{_esc(full_label)}</title></rect>'
         )
         parts.append(
-            f'<text x="{legend_x + 13}" y="{legend_y}" font-size="11" fill="#374151">'
+            f'<text x="{legend_x + 15}" y="{legend_y}" font-size="11" fill="#374151">'
             f'{_esc(label + latest_txt)}</text>'
         )
         legend_x += item_w
