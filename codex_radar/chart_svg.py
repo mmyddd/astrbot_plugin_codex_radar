@@ -335,7 +335,7 @@ def efficiency_scatter_svg(
             f'<text x="{legend_x + 15}" y="{legend_y}" font-size="11" fill="#374151">'
             f'{_esc(label)}</text>'
         )
-        legend_x += 19 + len(label) * 8
+        legend_x += 18 + len(label) * 6
 
     # 页脚
     footer = f"更新：{_fmt_time(updated_at)}"
@@ -511,7 +511,7 @@ def iq_history_svg(
             full_label = f"{s.model}@{s.effort}"
         latest = s.latest()
         latest_txt = "" if latest is None or latest.score is None else f"  {latest.score:.1f}"
-        item_w = 19 + (len(label) + len(latest_txt)) * 8
+        item_w = 18 + (len(label) + len(latest_txt)) * 6
         if legend_x + item_w > legend_max_x:
             legend_x = margin["left"] + 8
             legend_y += 18

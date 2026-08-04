@@ -181,8 +181,9 @@ def efficiency_scatter_png(
         color = model_color(model, seen_models)
         label = short_model(model)
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 13, legend_y - 10), label, font=_font(11), fill="#374151")
-        legend_x += 20 + len(label) * 11 + 6
+        draw.text((legend_x + 14, legend_y - 10), label, font=_font(11), fill="#374151")
+        text_w = draw.textlength(label, font=_font(11))
+        legend_x += 14 + text_w + 3
 
     footer = f"更新：{_fmt_time(updated_at)}"
     if source_url:
@@ -348,12 +349,12 @@ def iq_history_png(
         if latest is not None and latest.score is not None:
             label += f"  {latest.score:.1f}"
         text_w = draw.textlength(label, font=_font(11))
-        item_w = 15 + text_w + 4
+        item_w = 14 + text_w + 3
         if legend_x + item_w > legend_max_x:
             legend_x = margin["left"] + 8
             legend_y += 18
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
-        draw.text((legend_x + 15, legend_y - 10), label, font=_font(11), fill="#374151")
+        draw.text((legend_x + 14, legend_y - 10), label, font=_font(11), fill="#374151")
         legend_x += item_w
 
     footer = f"时间范围：{_fmt_time(window_start)} ~ {_fmt_time(window_end)}"
