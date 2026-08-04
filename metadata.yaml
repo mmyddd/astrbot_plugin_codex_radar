@@ -4,4 +4,4 @@ desc: 查询 Codex 雷达（codexradar.com / deng.codexradar.com）的模型智�
 version: v1.0.0
 author: mmyddd
 repo: https://github.com/mmyddd/astrbot_plugin_codex_radar
-astrbot_version: ">=4.16,<5"
+astrbot_version: ">=4.16"
