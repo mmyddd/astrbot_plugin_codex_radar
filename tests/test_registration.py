@@ -9,8 +9,8 @@ import pytest
 import main
 from astrbot.core.star.filter.command import CommandFilter
 from astrbot.core.star.register.star_handler import star_handlers_registry
-from radar.errors import RadarFetchError
-from radar.format import format_history_text, format_radar_text
+from codex_radar.errors import RadarFetchError
+from codex_radar.format import format_history_text, format_radar_text
 from tests.conftest import FakeEvent
 
 
@@ -192,8 +192,8 @@ async def test_history_command_error_path(plugin):
 
 def test_text_formatting_smoke(efficiency_payload, history_payload):
     """格式化函数不抛异常且包含关键信息。"""
-    from radar.history_parser import parse_iq_history
-    from radar.radar_parser import parse_intelligence_efficiency
+    from codex_radar.history_parser import parse_iq_history
+    from codex_radar.radar_parser import parse_intelligence_efficiency
 
     snapshot = parse_intelligence_efficiency(efficiency_payload)
     text = format_radar_text(snapshot)

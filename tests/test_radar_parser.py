@@ -6,8 +6,8 @@ import math
 
 import pytest
 
-from radar.errors import RadarParseError
-from radar.radar_parser import (
+from codex_radar.errors import RadarParseError
+from codex_radar.radar_parser import (
     COMBINED_COST_WEIGHT,
     parse_intelligence_efficiency,
 )

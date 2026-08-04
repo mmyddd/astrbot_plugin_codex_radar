@@ -19,12 +19,12 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import httpx
 import pytest
 
-from radar.cache import TTLCache
-from radar.client import fetch_json
-from radar.errors import RadarFetchError
-from radar.radar_parser import parse_intelligence_efficiency
-from radar.errors import RadarParseError
-from radar.service import RadarConfig, RadarService
+from codex_radar.cache import TTLCache
+from codex_radar.client import fetch_json
+from codex_radar.errors import RadarFetchError
+from codex_radar.radar_parser import parse_intelligence_efficiency
+from codex_radar.errors import RadarParseError
+from codex_radar.service import RadarConfig, RadarService
 
 PAYLOAD = {"ok": True, "value": 42}
 
@@ -199,7 +199,7 @@ def test_parse_error_diagnostic_contains_fields(efficiency_payload):
 
 def test_history_hours_options_match_deng_site():
     """档位与 deng 站 IQ_TREND_HOUR_OPTIONS=[24,48,72] 及 _conf_schema.json 一致。"""
-    from radar.service import HISTORY_HOURS_OPTIONS
+    from codex_radar.service import HISTORY_HOURS_OPTIONS
 
     assert HISTORY_HOURS_OPTIONS == (24, 48, 72)
     schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "_conf_schema.json")
@@ -208,7 +208,7 @@ def test_history_hours_options_match_deng_site():
 
 
 def test_history_hours_config_valid_options():
-    from radar.service import RadarConfig
+    from codex_radar.service import RadarConfig
 
     for hours in (24, 48, 72):
         assert RadarConfig.from_dict({"history_hours": hours}).history_hours == hours
@@ -216,7 +216,7 @@ def test_history_hours_config_valid_options():
 
 def test_history_hours_config_invalid_falls_back():
     """非法档位（站点没有的取值）回退默认 72。"""
-    from radar.service import RadarConfig
+    from codex_radar.service import RadarConfig
 
     for bad in (0, -5, 100, 7, 168):
         assert RadarConfig.from_dict({"history_hours": bad}).history_hours == 72

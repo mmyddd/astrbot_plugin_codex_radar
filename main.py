@@ -6,6 +6,7 @@
   并发送「综合成本 × IQ」曲线图片。
 - `雷达历史`：抓取 https://deng.codexradar.com/ 的 72h IQ 历史曲线
   （数据接口 api.codexradar.com/api/v1/iq-history），发送 72h 曲线图片并列出各模型数据。
+- `雷达历史 <模型>`：只输出指定模型的近 72h 各思考等级历史（支持 sol / d4flash 等别名）。
 
 图表渲染链路：AstrBot html_render（Playwright）→ Pillow PNG → 文本 + ASCII 走势图。
 失败时返回可诊断错误，绝不返回虚构数据。
@@ -14,23 +15,29 @@
 from __future__ import annotations
 
 import os
+import sys
 import tempfile
 import time
 from typing import Optional
+
+# AstrBot 的插件加载器不一定把插件目录加入 sys.path：
+# 这里显式加入，确保子包 codex_radar 可被 import（避免 No module named 'codex_radar'）。
+_PLUGIN_DIR = os.path.dirname(os.path.abspath(__file__))
+if _PLUGIN_DIR not in sys.path:
+    sys.path.insert(0, _PLUGIN_DIR)
 
 from astrbot.api import logger
 from astrbot.api.event import filter, AstrMessageEvent
 from astrbot.api.message_components import Image, Plain
 from astrbot.api.star import Context, Star
 
-from radar.chart_pil import efficiency_scatter_png, iq_history_png
-from radar.chart_svg import efficiency_scatter_svg, iq_history_svg
-from radar.errors import RadarError
-from radar.format import format_history_text, format_radar_text
-from radar.history_parser import HistorySnapshot, resolve_model_alias
-from radar.radar_parser import RadarSnapshot
-from radar.service import RadarConfig, RadarService
-
+from codex_radar.chart_pil import efficiency_scatter_png, iq_history_png
+from codex_radar.chart_svg import efficiency_scatter_svg, iq_history_svg
+from codex_radar.errors import RadarError
+from codex_radar.format import format_history_text, format_radar_text
+from codex_radar.history_parser import HistorySnapshot, resolve_model_alias
+from codex_radar.radar_parser import RadarSnapshot
+from codex_radar.service import RadarConfig, RadarService
 
 _HTML_SHELL = """<!doctype html>
 <html><head><meta charset="utf-8"></head>
@@ -49,6 +56,7 @@ class CodexRadarPlugin(Star):
     使用方式：
     - 发送「降智雷达」获取 codexradar.com 的智力效率数据与综合成本 × IQ 曲线。
     - 发送「雷达历史」获取 72 小时 IQ 历史曲线与各模型明细。
+    - 发送「雷达历史 sol / d4flash ...」获取指定模型的各思考等级历史。
     """
 
     def __init__(self, context: Context, config: Optional[dict] = None):

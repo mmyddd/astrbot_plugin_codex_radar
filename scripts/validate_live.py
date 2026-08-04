@@ -20,14 +20,14 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from radar.chart_pil import efficiency_scatter_png, iq_history_png  # noqa: E402
-from radar.chart_svg import efficiency_scatter_svg, iq_history_svg  # noqa: E402
-from radar.client import fetch_json  # noqa: E402
-from radar.errors import RadarError  # noqa: E402
-from radar.format import format_history_text, format_radar_text  # noqa: E402
-from radar.history_parser import parse_iq_history, resolve_model_alias  # noqa: E402
-from radar.radar_parser import parse_intelligence_efficiency  # noqa: E402
-from radar.service import HISTORY_URL, RADAR_URLS  # noqa: E402
+from codex_radar.chart_pil import efficiency_scatter_png, iq_history_png  # noqa: E402
+from codex_radar.chart_svg import efficiency_scatter_svg, iq_history_svg  # noqa: E402
+from codex_radar.client import fetch_json  # noqa: E402
+from codex_radar.errors import RadarError  # noqa: E402
+from codex_radar.format import format_history_text, format_radar_text  # noqa: E402
+from codex_radar.history_parser import parse_iq_history, resolve_model_alias  # noqa: E402
+from codex_radar.radar_parser import parse_intelligence_efficiency  # noqa: E402
+from codex_radar.service import HISTORY_URL, RADAR_URLS  # noqa: E402
 
 
 async def main() -> int:

@@ -6,8 +6,8 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from radar.errors import RadarParseError
-from radar.history_parser import parse_iq_history
+from codex_radar.errors import RadarParseError
+from codex_radar.history_parser import parse_iq_history
 
 URL = "https://api.codexradar.com/api/v1/iq-history"
 
@@ -119,7 +119,7 @@ def test_models_and_series_for_model(history_payload):
 
 
 def test_resolve_model_alias(history_payload):
-    from radar.history_parser import resolve_model_alias
+    from codex_radar.history_parser import resolve_model_alias
 
     available = ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "deepseek-v4-flash"]
     assert resolve_model_alias("sol", available) == "gpt-5.6-sol"
@@ -134,7 +134,7 @@ def test_resolve_model_alias(history_payload):
 
 
 def test_resolve_model_alias_errors(history_payload):
-    from radar.history_parser import resolve_model_alias
+    from codex_radar.history_parser import resolve_model_alias
 
     available = ["gpt-5.6-sol", "gpt-5.6-terra", "gpt-5.6-luna", "gpt-5.5", "deepseek-v4-flash"]
     # 歧义子串："5.6" 匹配三个模型

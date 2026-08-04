@@ -6,12 +6,12 @@ import xml.etree.ElementTree as ET
 
 from PIL import Image
 
-from radar.chart_pil import efficiency_scatter_png, iq_history_png
-from radar.chart_svg import efficiency_scatter_svg, iq_history_svg
+from codex_radar.chart_pil import efficiency_scatter_png, iq_history_png
+from codex_radar.chart_svg import efficiency_scatter_svg, iq_history_svg
 
 import pytest
-from radar.history_parser import parse_iq_history
-from radar.radar_parser import parse_intelligence_efficiency
+from codex_radar.history_parser import parse_iq_history
+from codex_radar.radar_parser import parse_intelligence_efficiency
 
 
 def test_scatter_svg_well_formed(efficiency_payload):
@@ -32,7 +32,7 @@ def test_scatter_svg_well_formed(efficiency_payload):
 
 def test_scatter_uses_log_scale_and_broken_axis(efficiency_payload):
     """站点同款：x 轴对数刻度，第二小值 >= 4× 最小值时启用断轴。"""
-    from radar.chart_svg import cost_tick_text, log_share, nice_max, scatter_layout
+    from codex_radar.chart_svg import cost_tick_text, log_share, nice_max, scatter_layout
 
     # 纯函数：对数刻度边界
     assert log_share(1, 1, 100) == 0
@@ -64,7 +64,7 @@ def test_scatter_uses_log_scale_and_broken_axis(efficiency_payload):
 def test_scatter_png_points_spread_across_width(efficiency_payload, tmp_path):
     """回归：对数刻度下点不应全部聚集在最左侧。"""
     from PIL import Image
-    from radar.chart_pil import efficiency_scatter_png
+    from codex_radar.chart_pil import efficiency_scatter_png
 
     snapshot = parse_intelligence_efficiency(efficiency_payload)
     out = tmp_path / "scatter.png"
@@ -114,7 +114,7 @@ def test_history_svg_dynamic_y_axis(history_payload):
 
 def test_history_png_dynamic_y_axis(history_payload, tmp_path):
     """Pillow 路径同样使用动态 y 轴（曲线占满大部分图高）。"""
-    from radar.chart_pil import iq_history_png
+    from codex_radar.chart_pil import iq_history_png
 
     snapshot = parse_iq_history(history_payload, hours=72)
     out = tmp_path / "history_dyn.png"
@@ -156,7 +156,7 @@ def test_history_svg_filtered_model_includes_efforts(history_payload):
 
 def test_history_svg_effort_colors_per_level(history_payload):
     """雷达历史 sol：各思考强度用不同颜色（站点 effortColors），无模型平均线。"""
-    from radar.chart_svg import EFFORT_COLORS, MODEL_COLORS
+    from codex_radar.chart_svg import EFFORT_COLORS, MODEL_COLORS
 
     snapshot = parse_iq_history(history_payload, hours=72)
     series = [s for s in snapshot.series_for_model("gpt-5.6-sol") if s.effort is not None]
@@ -180,7 +180,7 @@ def test_history_svg_effort_colors_per_level(history_payload):
 
 def test_history_png_effort_colors(history_payload, tmp_path):
     """Pillow 降级路径同样按强度着色，且不画模型平均线。"""
-    from radar.chart_pil import iq_history_png
+    from codex_radar.chart_pil import iq_history_png
 
     snapshot = parse_iq_history(history_payload, hours=72)
     series = [s for s in snapshot.series_for_model("gpt-5.6-sol") if s.effort is not None]

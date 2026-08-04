@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from radar.errors import RadarParseError
-from radar.history_parser import parse_iq_history
-from radar.radar_parser import parse_intelligence_efficiency
+from codex_radar.errors import RadarParseError
+from codex_radar.history_parser import parse_iq_history
+from codex_radar.radar_parser import parse_intelligence_efficiency
 
 RADAR_URL = "https://codexradar.com/api/intelligence-efficiency"
 HISTORY_URL = "https://api.codexradar.com/api/v1/iq-history"
