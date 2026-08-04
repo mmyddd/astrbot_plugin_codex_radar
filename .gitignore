@@ -36,6 +36,15 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+# AstrBot 运行时数据（在本仓库目录下运行 AstrBot 时产生）
+data/
+
+# 本地验证输出
+out/
+
+# pytest 缓存
+.pytest_cache/
+
 # Unit test / coverage reports
 htmlcov/
 .tox/

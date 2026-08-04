@@ -1,0 +1,33 @@
+{
+  "radar_cache_seconds": {
+    "type": "int",
+    "description": "降智雷达数据缓存秒数（站点约每几分钟更新一次）",
+    "default": 300
+  },
+  "history_cache_seconds": {
+    "type": "int",
+    "description": "雷达历史数据缓存秒数（72h 曲线每小时新增一个观察点）",
+    "default": 600
+  },
+  "request_timeout_seconds": {
+    "type": "float",
+    "description": "HTTP 请求超时（秒）",
+    "default": 12.0
+  },
+  "request_retries": {
+    "type": "int",
+    "description": "HTTP 请求重试次数（超时 / 5xx / 429 时重试）",
+    "default": 2
+  },
+  "history_hours": {
+    "type": "int",
+    "description": "雷达历史时间范围（小时）",
+    "default": 72,
+    "options": [24, 48, 72]
+  },
+  "send_chart_image": {
+    "type": "bool",
+    "description": "优先发送曲线图片（渲染失败自动降级为文本）",
+    "default": true
+  }
+}

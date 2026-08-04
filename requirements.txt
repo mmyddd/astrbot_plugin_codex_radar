@@ -1,0 +1,5 @@
+# 运行时依赖
+# httpx 用于异步抓取目标站点公开 JSON 接口（AstrBot 自带，此处显式声明）
+httpx>=0.24
+# Pillow 用于图表渲染的降级路径（AstrBot 自带，此处显式声明）
+Pillow>=9.0
