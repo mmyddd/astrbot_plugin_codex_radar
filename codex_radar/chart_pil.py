@@ -176,13 +176,16 @@ def efficiency_scatter_png(
             draw.text((x - 12, y + dy - 7), point.effort, font=_font(11), fill="#374151")
 
     legend_y = height - margin["bottom"] + 34
-    legend_x = margin["left"] + 8
-    for model in models_in_order:
-        color = model_color(model, seen_models)
-        label = short_model(model)
+    legend_items = [(short_model(model), model_color(model, seen_models)) for model in models_in_order]
+    text_ws = [draw.textlength(label, font=_font(11)) for label, _ in legend_items]
+    total_w = sum(14 + tw + 3 for tw in text_ws)
+    if total_w <= width - margin["left"] - margin["right"]:
+        legend_x = (width - total_w) / 2  # 居中
+    else:
+        legend_x = margin["left"] + 8
+    for (label, color), text_w in zip(legend_items, text_ws):
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
         draw.text((legend_x + 14, legend_y - 10), label, font=_font(11), fill="#374151")
-        text_w = draw.textlength(label, font=_font(11))
         legend_x += 14 + text_w + 3
 
     footer = f"更新：{_fmt_time(updated_at)}"
@@ -330,9 +333,8 @@ def iq_history_png(
             x, y = segments[-1][-1]
             draw.ellipse([x - 4, y - 4, x + 4, y + 4], fill=color)
 
-    legend_x = margin["left"] + 8
     legend_y = height - margin["bottom"] + 34
-    legend_max_x = width - margin["right"] - 10
+    legend_labels: list[str] = []
     for s in series:
         color = (
             effort_color(s.effort)
@@ -348,19 +350,22 @@ def iq_history_png(
         latest = s.latest()
         if latest is not None and latest.score is not None:
             label += f"  {latest.score:.1f}"
-        text_w = draw.textlength(label, font=_font(11))
-        item_w = 14 + text_w + 3
-        if legend_x + item_w > legend_max_x:
-            legend_x = margin["left"] + 8
-            legend_y += 18
+        legend_labels.append((label, color))
+    text_ws = [draw.textlength(label, font=_font(11)) for label, _ in legend_labels]
+    total_w = sum(14 + tw + 3 for tw in text_ws)
+    if total_w <= width - margin["left"] - margin["right"]:
+        legend_x = (width - total_w) / 2  # 居中
+    else:
+        legend_x = margin["left"] + 8
+    for (label, color), text_w in zip(legend_labels, text_ws):
         draw.rectangle([legend_x, legend_y - 10, legend_x + 12, legend_y + 2], fill=color)
         draw.text((legend_x + 14, legend_y - 10), label, font=_font(11), fill="#374151")
-        legend_x += item_w
+        legend_x += 14 + text_w + 3
 
     footer = f"时间范围：{_fmt_time(window_start)} ~ {_fmt_time(window_end)}"
     if updated_at:
         footer += f"  更新：{_fmt_time(updated_at)}"
-    draw.text((width / 2 - 220, height - 18), footer[:70], font=_font(12), fill="#9ca3af")
+    draw.text((width / 2, height - 14), footer, font=_font(12), fill="#9ca3af", anchor="mm")
 
     os.makedirs(os.path.dirname(out_path) or ".", exist_ok=True)
     image.save(out_path, "PNG")

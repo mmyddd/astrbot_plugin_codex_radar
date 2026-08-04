@@ -321,12 +321,19 @@ def efficiency_scatter_svg(
                 f'fill="#374151">{_esc(point.effort)}</text>'
             )
 
-    # 图例（模型颜色 + 站点风格短名，单行横排，位置保持原布局；完整名放入 <title> 悬浮提示）
+    # 图例（模型颜色 + 站点风格短名，单行横排且整体居中；完整名放入 <title> 悬浮提示）
+    legend_items = [
+        (short_model(model), model_color(model, seen_models), model)
+        for model in models_in_order
+    ]
+    item_ws = [18 + len(label) * 6 for label, _, _ in legend_items]
+    total_w = sum(item_ws)
     legend_y = height - margin["bottom"] + 34
-    legend_x = margin["left"] + 8
-    for model in models_in_order:
-        color = model_color(model, seen_models)
-        label = short_model(model)
+    if total_w <= width - margin["left"] - margin["right"]:
+        legend_x = (width - total_w) / 2  # 居中
+    else:
+        legend_x = margin["left"] + 8  # 超宽回退左对齐
+    for (label, color, model), item_w in zip(legend_items, item_ws):
         parts.append(
             f'<rect x="{legend_x}" y="{legend_y - 10}" width="12" height="12" rx="2" fill="{color}">'
             f'<title>{_esc(model)}</title></rect>'
@@ -335,7 +342,7 @@ def efficiency_scatter_svg(
             f'<text x="{legend_x + 15}" y="{legend_y}" font-size="11" fill="#374151">'
             f'{_esc(label)}</text>'
         )
-        legend_x += 18 + len(label) * 6
+        legend_x += item_w
 
     # 页脚
     footer = f"更新：{_fmt_time(updated_at)}"
@@ -490,10 +497,8 @@ def iq_history_svg(
             x, y = segments[-1][-1]
             parts.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" fill="{color}"/>')
 
-    # 图例（左下角底部横排，与综合智力图一致；完整名放入 <title> 悬浮提示）
-    legend_x = margin["left"] + 8
-    legend_y = height - margin["bottom"] + 34
-    legend_max_x = width - margin["right"] - 10
+    # 图例（底部横排，整体居中；完整名放入 <title> 悬浮提示）
+    legend_items: list[tuple[str, str, str]] = []
     for s in series:
         color = (
             effort_color(s.effort)
@@ -511,17 +516,22 @@ def iq_history_svg(
             full_label = f"{s.model}@{s.effort}"
         latest = s.latest()
         latest_txt = "" if latest is None or latest.score is None else f"  {latest.score:.1f}"
-        item_w = 18 + (len(label) + len(latest_txt)) * 6
-        if legend_x + item_w > legend_max_x:
-            legend_x = margin["left"] + 8
-            legend_y += 18
+        legend_items.append((label + latest_txt, color, full_label))
+    item_ws = [18 + len(label) * 6 for label, _, _ in legend_items]
+    total_w = sum(item_ws)
+    legend_y = height - margin["bottom"] + 34
+    if total_w <= width - margin["left"] - margin["right"]:
+        legend_x = (width - total_w) / 2  # 居中
+    else:
+        legend_x = margin["left"] + 8  # 超宽回退左对齐
+    for (label, color, full_label), item_w in zip(legend_items, item_ws):
         parts.append(
             f'<rect x="{legend_x}" y="{legend_y - 10}" width="12" height="12" rx="2" fill="{color}">'
             f'<title>{_esc(full_label)}</title></rect>'
         )
         parts.append(
             f'<text x="{legend_x + 15}" y="{legend_y}" font-size="11" fill="#374151">'
-            f'{_esc(label + latest_txt)}</text>'
+            f'{_esc(label)}</text>'
         )
         legend_x += item_w
 
