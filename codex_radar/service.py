@@ -15,8 +15,10 @@ from .radar_parser import RadarSnapshot, parse_intelligence_efficiency
 
 RADAR_URLS = [
     "https://codexradar.com/api/intelligence-efficiency",
-    # 站点内置的静态快照（前端 fallback，结构相同）
+    # 站点内置的静态快照（前端 fallback，新分布式 points 格式）
     "https://codexradar.com/data/intelligence-efficiency.json",
+    "https://api.codexradar.com/api/v1/intelligence-efficiency",
+    "https://api.codexradar.com/api/v1/table",
 ]
 
 # 站点前端（deng.codexradar.com）实际使用的历史接口：

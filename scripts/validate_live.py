@@ -62,10 +62,12 @@ async def main() -> int:
     else:
         print(f"模型×强度组合：{radar_snapshot.combos_count}，评测题：{radar_snapshot.tasks_count}")
         print(f"更新时间：{radar_snapshot.updated_at}（最新判分 {radar_snapshot.source_updated_at}）")
+        def _f(v, d=1):
+            return "—" if v is None else f"{v:.{d}f}"
         for model, points in radar_snapshot.points_by_model():
             row = ", ".join(
-                f"{p.effort}: IQ={p.iq:.1f} 耗时={p.average_minutes:.1f}分 "
-                f"花费=${p.average_price_usd:.3f} 综合成本={p.combined_cost_index:.0f}"
+                f"{p.effort}: IQ={_f(p.iq,1)} 耗时={_f(p.average_minutes,1)}分 "
+                f"花费=${_f(p.average_price_usd,3)} 综合成本={_f(p.combined_cost_index,0)}"
                 for p in points
             )
             print(f"  {model}: {row}")

@@ -8,6 +8,14 @@
 - 综合成本指数 = price * (minutes / 10) ^ ln(2.5)/ln(1.35) * 100，
   再按全图最高值归一为 100（对应站点「综合成本 × IQ」图的公式）
 - 数据更新时间 = baseline_generated_at（数据生成时间）与最新判分时间
+
+已同步最新接口形态（2026-08-19 实测）：
+- 旧格式 schema=1：combos + tasks + cells（https://codexradar.com/api/intelligence-efficiency）
+- 新分布式格式 schema=2/3：points 列表（https://codexradar.com/data/intelligence-efficiency.json、
+  https://api.codexradar.com/api/v1/intelligence-efficiency / table），直接给出每个模型×强度的聚合值
+  共 11 模型 × 37 档位：gpt-5.6-sol(6)/terra(6)/luna(5)、gpt-5.5(2)、deepseek-v4-flash/pro(2+2)、
+  dsh-deepseek-v4-flash/pro(2+2)、grok-4.6(4)、k3(3)、glm-5.3(3)
+  思考强度全集：off/low/medium/high/xhigh/max/ultra
 """
 
 from __future__ import annotations
@@ -61,6 +69,7 @@ class RadarPoint:
     cache_hit_rate: Optional[float] = None
     raw_combined_cost: Optional[float] = None
     combined_cost_index: Optional[float] = None
+    harness: Optional[str] = None
 
     @property
     def key(self) -> str:
@@ -111,8 +120,152 @@ def _parse_iso(value: Any) -> Optional[str]:
     return str(value)
 
 
+def _parse_points_format(payload: dict[str, Any], source: str) -> RadarSnapshot:
+    """解析新分布式 points 列表格式（schema 2 / 3）。"""
+    raw_points = payload.get("points")
+    if not isinstance(raw_points, list) or not raw_points:
+        raise RadarParseError(source, "缺少非空 points 列表（模型×思考强度聚合）")
+    points: list[RadarPoint] = []
+    source_updated_at: Optional[str] = None
+    # 兼容字段：source_updated_at / baseline_generated_at / discrimination_generated_at
+    baseline = _parse_iso(payload.get("baseline_generated_at") or payload.get("source_updated_at") or payload.get("metrics_source"))
+    discrim = _parse_iso(payload.get("discrimination_generated_at"))
+    # points 本身也有时间，取最大
+    for item in raw_points:
+        if not isinstance(item, dict):
+            raise RadarParseError(source, f"points 中存在非对象元素：{item!r}")
+        model = str(item.get("model") or "").strip()
+        effort = str(item.get("effort") or "").strip()
+        if not model or not effort:
+            raise RadarParseError(source, f"points 中存在缺少 model/effort 的元素：{item!r}")
+        # 兼容字段名：passed/valid_tasks vs passed/total
+        passed = item.get("passed")
+        passed_i = int(passed) if isinstance(passed, (int, float)) and not isinstance(passed, bool) else 0
+        valid = item.get("valid_tasks")
+        if valid is None:
+            valid = item.get("total")
+        valid_i = int(valid) if isinstance(valid, (int, float)) and not isinstance(valid, bool) else 0
+        # IQ：优先直接取，否则按通过率计算
+        iq = finite_number(item.get("iq"))
+        if iq is None and valid_i > 0:
+            iq = passed_i / valid_i * IQ_SCALE
+        # 价格/耗时
+        price = finite_number(item.get("average_price_usd"))
+        minutes = finite_number(item.get("average_minutes"))
+        # 如果价格为空但有 by_band，尝试取当前带的价格（不强求）
+        # token 统计
+        steps = finite_number(item.get("average_agent_steps"))
+        tokens = finite_number(item.get("average_total_tokens"))
+        cache = finite_number(item.get("cache_hit_rate"))
+        # 时间
+        latest = _parse_iso(item.get("latest_graded_at") or item.get("source_updated_at"))
+        if latest and (source_updated_at is None or latest > source_updated_at):
+            source_updated_at = latest
+        # harness
+        harness = item.get("harness") if isinstance(item.get("harness"), str) else None
+        # 构造点
+        pt = RadarPoint(
+            model=model,
+            effort=effort,
+            passed=passed_i,
+            valid_tasks=valid_i,
+            iq=iq,
+            average_price_usd=price,
+            price_samples=int(item.get("price_samples") or item.get("token_samples") or 0) if isinstance(item.get("price_samples") or item.get("token_samples"), (int, float)) else 0,
+            average_minutes=minutes,
+            duration_samples=int(item.get("duration_samples") or 0) if isinstance(item.get("duration_samples"), (int, float)) else 0,
+            total_runs=int(item.get("total_runs") or item.get("runs_total") or 0) if isinstance(item.get("total_runs") or item.get("runs_total"), (int, float)) else 0,
+            latest_graded_at=latest,
+            average_agent_steps=steps,
+            average_total_tokens=tokens,
+            cache_hit_rate=cache,
+            harness=harness,
+        )
+        # 处理已有的 raw/combined（兼容旧快照直接给出的归一值）
+        raw = finite_number(item.get("raw_combined_cost"))
+        idx = finite_number(item.get("combined_cost_index"))
+        # 若提供了 raw 采用 raw；若只提供了 idx 且值 >100 视为 raw（schema 3 未归一），否则视为已归一的 index
+        # 统一先存 raw，后面统一按 price/minutes 重算并归一（若可算），否则回退到提供的 index/raw
+        if raw is not None:
+            pt.raw_combined_cost = raw
+            if idx is not None and idx <= 100.0:
+                pt.combined_cost_index = idx
+        elif idx is not None:
+            # 判断是否已归一：若最大值 <=100 则认为是已归一的 index，否则当作 raw
+            # 单点无法判断，暂存为 raw，归一阶段再处理
+            # 这里先把 idx 当 raw 存，后续若 price/minutes 可算则会覆盖
+            pt.raw_combined_cost = idx if idx > 100 else None
+            if idx <= 100:
+                pt.combined_cost_index = idx
+            else:
+                pt.raw_combined_cost = idx
+        points.append(pt)
+
+    # 统一计算综合成本（若 price/minutes 齐全则按公式重算，保证与站点前端一致）
+    for pt in points:
+        if pt.average_price_usd is not None and pt.average_price_usd > 0 and pt.average_minutes is not None and pt.average_minutes > 0:
+            calc_raw = pt.average_price_usd * math.pow(pt.average_minutes / 10.0, COMBINED_COST_WEIGHT) * 100.0
+            pt.raw_combined_cost = calc_raw
+            pt.combined_cost_index = None  # 待归一
+        elif pt.raw_combined_cost is None and pt.combined_cost_index is not None:
+            # 仅有已归一的 index 时，保留 index，raw 保持 None
+            pt.raw_combined_cost = None
+        elif pt.raw_combined_cost is not None and pt.combined_cost_index is None:
+            # 仅有 raw，待归一
+            pass
+
+    # 归一化：最高 raw 归为 100
+    max_raw = max((p.raw_combined_cost or 0.0) for p in points) if points else 0.0
+    # 若所有 raw 都为 None（例如 k3 无价格），则尝试从已有的 combined_cost_index 判断最大值
+    if max_raw == 0:
+        max_idx = max((p.combined_cost_index or 0.0) for p in points) if points else 0.0
+        if max_idx > 0:
+            # 已归一无需处理
+            pass
+        else:
+            # 无成本数据，保持 None
+            pass
+    else:
+        for pt in points:
+            if pt.raw_combined_cost is not None and max_raw > 0:
+                pt.combined_cost_index = pt.raw_combined_cost / max_raw * 100.0
+
+    # 过滤无有效判分的点（保持与旧格式一致：iq 为 None 的跳过）
+    # 但新格式中部分点可能无 IQ（如尚未产生样本），应保留？旧格式是跳过 valid_tasks==0 的点。
+    # 这里保留所有点中 iq 非 None 的，或 passed>0 的
+    filtered = [p for p in points if p.iq is not None]
+    if not filtered:
+        raise RadarParseError(source, "没有任何模型×思考强度组合拥有有效判分数据")
+
+    schema_val = payload.get("schema")
+    try:
+        schema_i = int(schema_val) if schema_val is not None else 2
+    except (TypeError, ValueError):
+        schema_i = 2
+    combos_count = len(filtered)
+    tasks_count = int(payload.get("task_count") or payload.get("tasks_count") or payload.get("runs_total") or 0) if isinstance(payload.get("task_count") or payload.get("tasks_count") or payload.get("runs_total"), (int, float)) else 0
+
+    # baseline 时间优先 payload 的 source_updated_at，否则取点中的最新时间
+    baseline_final = baseline or source_updated_at or _parse_iso(payload.get("source_updated_at"))
+
+    return RadarSnapshot(
+        schema=schema_i,
+        combos_count=combos_count,
+        tasks_count=tasks_count,
+        points=filtered,
+        baseline_generated_at=baseline_final,
+        discrimination_generated_at=discrim,
+        source_updated_at=source_updated_at or baseline_final,
+        token_pricing=payload.get("token_pricing"),
+        tier_windows_usd=payload.get("tier_windows_usd"),
+        source_url=source,
+    )
+
+
 def parse_intelligence_efficiency(payload: Any, url: str = "") -> RadarSnapshot:
     """校验并解析 /api/intelligence-efficiency 响应。
+
+    兼容旧 schema=1（combos/tasks/cells）与新分布式 points（schema 2/3）。
 
     :raises RadarParseError: 结构缺失 / 字段异常 / schema 不匹配。
     """
@@ -123,9 +276,13 @@ def parse_intelligence_efficiency(payload: Any, url: str = "") -> RadarSnapshot:
             source, f"顶层结构应为 JSON 对象，实际为 {type(payload).__name__}"
         )
 
+    # 新格式：优先检测 points 列表（分布式）
+    if "points" in payload and isinstance(payload.get("points"), list):
+        return _parse_points_format(payload, source)
+
     schema = payload.get("schema")
     if schema != 1:
-        raise RadarParseError(source, f"不支持的 schema={schema!r}（预期 1，站点可能已改版）")
+        raise RadarParseError(source, f"不支持的 schema={schema!r}（预期 1 或含 points 的新格式，站点可能已改版）")
 
     combos = payload.get("combos")
     tasks = payload.get("tasks")
@@ -150,6 +307,9 @@ def parse_intelligence_efficiency(payload: Any, url: str = "") -> RadarSnapshot:
             raise RadarParseError(source, f"combos 中存在缺少 model/effort 的元素：{combo!r}")
 
         point = RadarPoint(model=model, effort=effort)
+        # 记录 harness（若有）
+        if isinstance(combo.get("harness"), str):
+            point.harness = combo.get("harness")
         for task in tasks:
             if not isinstance(task, dict) or task.get("id") is None:
                 continue

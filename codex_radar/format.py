@@ -9,6 +9,7 @@ from .history_parser import HistorySnapshot, HistorySeries
 from .radar_parser import RadarSnapshot
 
 EFFORT_ZH = {
+    "off": "关",
     "low": "低",
     "medium": "中",
     "high": "高",

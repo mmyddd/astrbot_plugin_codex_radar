@@ -11,6 +11,13 @@
 - score 为 0-150 的 IQ 分数（100% 通过率 -> 150）；无数据时为 null
 - 「latest:」前缀系列用于站点「实时监控」模式，优先用于绘图
 - 72h 窗口按所有系列中最新观察时间回退 hours 小时截取
+
+最新模型（2026-08-19 实测）：
+  codex / codex-订阅: gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna, gpt-5.5, deepseek-v4-flash, deepseek-v4-pro
+  dsh: dsh-deepseek-v4-flash, dsh-deepseek-v4-pro
+  订阅新渠道: k3 (kimi-code), glm-5.3 (zcode), grok-4.6 (grok-build)
+思考强度（按站点 effortOrder）：
+  off（仅 deepseek 系关闭推理）、low、medium、high、xhigh、max、ultra（仅 sol/terra）
 """
 
 from __future__ import annotations
@@ -25,15 +32,27 @@ from .errors import RadarParseError
 LATEST_PREFIX = "latest:"
 
 
-# 模型别名表：支持「雷达历史 sol / d4flash」等短名
+# 模型别名表：支持「雷达历史 sol / d4flash」等短名（已同步至最新 11 模型）
 MODEL_ALIASES: dict[str, list[str]] = {
     "gpt-5.6-sol": ["sol", "5.6sol", "gpt5.6sol", "gpt56sol"],
     "gpt-5.6-terra": ["terra", "5.6terra", "gpt5.6terra", "gpt56terra"],
     "gpt-5.6-luna": ["luna", "5.6luna", "gpt5.6luna", "gpt56luna"],
     "gpt-5.5": ["5.5", "gpt5.5", "gpt55"],
     "deepseek-v4-flash": [
-        "d4flash", "deepseek", "deepseekv4flash", "deepseekv4", "d4", "ds", "v4flash",
+        "d4flash", "d4f", "deepseek", "deepseekv4flash", "deepseekv4", "d4", "ds", "v4flash",
     ],
+    "deepseek-v4-pro": [
+        "d4pro", "d4p", "deepseekpro", "deepseekv4pro", "dspro", "v4pro", "pro",
+    ],
+    "dsh-deepseek-v4-flash": [
+        "dshflash", "dsh-d4flash", "dsh-v4f", "dsh-v4flash", "dshv4f", "dsh", "dsh-flash",
+    ],
+    "dsh-deepseek-v4-pro": [
+        "dshpro", "dsh-d4pro", "dsh-v4p", "dsh-v4pro", "dshv4p", "dsh-pro",
+    ],
+    "grok-4.6": ["grok", "grok46", "g46", "grok4.6", "grok-4.6"],
+    "k3": ["k3", "kimi", "kimi-k3", "kimi-code", "k3-code"],
+    "glm-5.3": ["glm", "glm53", "glm5.3", "zcode", "glm-5.3"],
 }
 
 
@@ -60,11 +79,11 @@ def resolve_model_alias(query: str, available: Sequence[str]) -> str:
         return matches[0]
     if len(matches) > 1:
         raise ValueError(
-            f"「{query}」匹配到多个模型：{'、'.join(matches)}，请使用更精确的名称（如 sol / terra / luna / 5.5 / d4flash）"
+            f"「{query}」匹配到多个模型：{'、'.join(matches)}，请使用更精确的名称（如 sol / terra / luna / 5.5 / d4flash / grok / k3 / glm）"
         )
     raise ValueError(
         f"未找到模型「{query}」。可用模型：{'、'.join(available)}；"
-        "别名示例：sol / terra / luna / 5.5 / d4flash"
+        "别名示例：sol / terra / luna / 5.5 / d4flash / d4pro / grok / k3 / glm"
     )
 
 

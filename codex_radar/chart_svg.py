@@ -20,20 +20,26 @@ from .radar_parser import RadarPoint
 WIDTH = 960
 HEIGHT = 640
 
-# 站点前端的模型配色（modelInfo）
+# 站点前端的模型配色（modelInfo）——已同步 2026-08-19 最新 11 模型
 MODEL_COLORS = {
     "gpt-5.6-sol": "#eab308",
     "gpt-5.6-terra": "#3b82f6",
     "gpt-5.6-luna": "#94a3b8",
     "gpt-5.5": "#00b8d9",
-    "deepseek-v4-flash": "#8b5cf6",
+    "deepseek-v4-flash": "#2563eb",
+    "deepseek-v4-pro": "#a855f7",
+    "dsh-deepseek-v4-flash": "#4d6bfe",
+    "dsh-deepseek-v4-pro": "#818cf8",
+    "grok-4.6": "#f59e0b",
+    "k3": "#10b981",
+    "glm-5.3": "#06b6d4",
 }
 FALLBACK_COLORS = [
     "#f0e442", "#cc79a7", "#56b4e9", "#00c98d", "#e69f00",
     "#a78bfa", "#ff7f50", "#fb7185", "#60a5fa", "#c4b5fd",
 ]
 
-# 站点前端（deng.codexradar.com）的思考强度配色 effortColors
+# 站点前端（deng.codexradar.com）的思考强度配色 effortColors（新增 off）
 EFFORT_COLORS = {
     "ultra": "#f0e442",
     "max": "#cc79a7",
@@ -41,6 +47,7 @@ EFFORT_COLORS = {
     "high": "#00c98d",
     "medium": "#a78bfa",
     "low": "#e69f00",
+    "off": "#9ca3af",
 }
 
 
@@ -69,8 +76,8 @@ def short_model(model: str) -> str:
             return model[len(prefix):]
     return model
 
-# 站点前端 effortOrder：决定同模型内各强度的连线顺序
-EFFORT_ORDER = {"low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4, "ultra": 5}
+# 站点前端 effortOrder：决定同模型内各强度的连线顺序（新增 off=-1，关闭推理最靠前）
+EFFORT_ORDER = {"off": -1, "low": 0, "medium": 1, "high": 2, "xhigh": 3, "max": 4, "ultra": 5}
 
 
 def nice_max(value: float) -> float:
@@ -130,6 +137,8 @@ def effort_shape_svg(effort: str, x: float, y: float, color: str) -> str:
             f"{x + dx:.1f},{y + dy:.1f}" for dx, dy in (_star_point(i) for i in range(10))
         )
         return f'<polygon points="{star}" fill="{color}"/>'
+    if effort == "off":
+        return f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="none" stroke="{color}" stroke-width="2"/>'
     return f'<circle cx="{x:.1f}" cy="{y:.1f}" r="5" fill="{color}"/>'
 
 

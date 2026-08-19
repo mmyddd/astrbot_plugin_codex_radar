@@ -3,10 +3,10 @@
 指令：
 - `降智雷达`：抓取 https://codexradar.com/ 的智力效率数据
   （耗时 / 分数 / 花费 / 综合成本曲线 / 更新时间），按模型 × 思考强度完整列出，
-  并发送「综合成本 × IQ」曲线图片。
+  并发送「综合成本 × IQ」曲线图片。支持 11 模型 × 37 档位（gpt-5.6 全系、gpt-5.5、deepseek 系、grok/k3/glm）。
 - `雷达历史`：抓取 https://deng.codexradar.com/ 的 72h IQ 历史曲线
   （数据接口 api.codexradar.com/api/v1/iq-history），发送 72h 曲线图片并列出各模型数据。
-- `雷达历史 <模型>`：只输出指定模型的近 72h 各思考等级历史（支持 sol / d4flash 等别名）。
+- `雷达历史 <模型>`：只输出指定模型的近 72h 各思考等级历史（支持 sol / d4flash / grok / k3 / glm 等别名）。
 
 图表渲染链路：AstrBot html_render（Playwright）→ Pillow PNG → 文本 + ASCII 走势图。
 失败时返回可诊断错误，绝不返回虚构数据。
@@ -58,9 +58,9 @@ class CodexRadarPlugin(Star):
     """Codex 智力效率雷达插件。
 
     使用方式：
-    - 发送「降智雷达」获取 codexradar.com 的智力效率数据与综合成本 × IQ 曲线。
-    - 发送「雷达历史」获取 72 小时 IQ 历史曲线与各模型明细。
-    - 发送「雷达历史 sol / d4flash ...」获取指定模型的各思考等级历史。
+    - 发送「降智雷达」获取 codexradar.com 的智力效率数据与综合成本 × IQ 曲线（11 模型 37 档位）。
+    - 发送「雷达历史」获取 72 小时 IQ 历史曲线与各模型明细（支持 off/low/medium/high/xhigh/max/ultra）。
+    - 发送「雷达历史 sol / d4flash / grok / k3 / glm ...」获取指定模型的各思考等级历史。
     """
 
     def __init__(self, context: Context, config: Optional[dict] = None):

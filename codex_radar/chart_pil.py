@@ -226,6 +226,8 @@ def _draw_effort_shape(
             [(x + dx, y + dy) for dx, dy in (_star_point(i) for i in range(10))],
             fill=color,
         )
+    elif effort == "off":
+        draw.ellipse([x - 5, y - 5, x + 5, y + 5], outline=color, width=2)
     else:
         draw.ellipse([x - 5, y - 5, x + 5, y + 5], fill=color)
 
